@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model EMPRESAS {
+  epr_id            Int        @id @default(autoincrement())
+  epr_nomb          String     @db.NVarChar(100)
+  epr_ruc           String     @db.Char(13)
+  epr_email         String     @db.NVarChar(100)
+  epr_fechaCreacion DateTime   @default(now()) @db.DateTime
+  locales           LOCALES[]
+}
+
+model LOCALES {
+  loc_id        Int        @id @default(autoincrement())
+  loc_direc     String     @db.NVarChar(200)
+  epr_id        Int
+  empresa       EMPRESAS   @relation(fields: [epr_id], references: [epr_id], onDelete: NoAction, onUpdate: NoAction)
+  departamentos DEPARTAMENTOS[]
+}
+
+model DEPARTAMENTOS {
+  dpt_id        Int        @id @default(autoincrement())
+  dpt_nomb      String     @db.NVarChar(100)
+  dpt_loc_id    Int
+  local         LOCALES    @relation(fields: [dpt_loc_id], references: [loc_id], onDelete: NoAction, onUpdate: NoAction)
+  empleados     EMPLEADOS[]
+}
+
+model TIPOEMPLEADOS {
+  tpp_id        Int        @id @default(autoincrement())
+  tpp_nomb      String     @db.NVarChar(50)
+  empleados     EMPLEADOS[]
+}
+
+model EMPLEADOS {
+  emp_id        Int        @id @default(autoincrement())
+  emp_nomb      String     @db.NVarChar(100)
+  emp_ape       String     @db.NVarChar(100)
+  emp_dni       String     @db.Char(10)
+  emp_email     String     @db.NVarChar(100)
+  emp_est       String     @db.NVarChar(20)
+  dpt_id        Int
+  emp_tpp_id    Int
+  departamento  DEPARTAMENTOS @relation(fields: [dpt_id], references: [dpt_id], onDelete: NoAction, onUpdate: NoAction)
+  tipoEmpleado  TIPOEMPLEADOS @relation(fields: [emp_tpp_id], references: [tpp_id], onDelete: NoAction, onUpdate: NoAction)
+  asignaciones  ASIGNACIONEQUIPOS[]
+  transacciones TRANSACCIONSUMINISTROS[]
+  usuarios      USUARIOS[]
+}
+
+model MODELOEQUIPOS {
+  mdl_id        Int        @id @default(autoincrement())
+  mdl_nomb      String     @db.NVarChar(100)
+  marcas        MARCAEQUIPOS[]
+}
+
+model MARCAEQUIPOS {
+  mrc_id        Int        @id @default(autoincrement())
+  mrc_nomb      String     @db.NVarChar(100)
+  mdl_id        Int
+  modelo        MODELOEQUIPOS @relation(fields: [mdl_id], references: [mdl_id], onDelete: NoAction, onUpdate: NoAction)
+  equipos       EQUIPOS[]
+}
+
+model TIPOEQUIPOS {
+  tpe_id        Int        @id @default(autoincrement())
+  tpe_nomb      String     @db.NVarChar(50)
+  equipos       EQUIPOS[]
+}
+
+model ESTADOEQUIPOS {
+  est_id        Int        @id @default(autoincrement())
+  est_nomb      String     @db.NVarChar(50)
+  equipos       EQUIPOS[]
+}
+
+model PROVEEDOREQUIPOS {
+  pvr_id        Int        @id @default(autoincrement())
+  pvr_nomb      String     @db.NVarChar(100)
+  pvr_ruc       String     @db.Char(13)
+  pvr_dir       String     @db.NVarChar(100)
+  pvr_numTelf   String     @db.NVarChar(12)
+  pvr_email     String     @db.NVarChar(100)
+  equipos       EQUIPOS[]
+  suministros   SUMINISTROS[]
+}
+
+model EQUIPOS {
+  equ_id             Int        @id @default(autoincrement())
+  equ_tpe_id         Int
+  equ_mrc_id         Int
+  equ_sn             String     @db.NVarChar(100)
+  equ_especificacion String     @db.NVarChar(Max)
+  equ_fechaComp      DateTime   @db.DateTime
+  equ_pu             Decimal    @db.Decimal(10, 2)
+  pvr_id             Int
+  equ_numFact        String     @db.NVarChar(50)
+  equ_numOC          String     @db.NVarChar(50)
+  equ_garantia       DateTime   @db.DateTime
+  equ_est_id         Int
+  tipoEquipo         TIPOEQUIPOS      @relation(fields: [equ_tpe_id], references: [tpe_id], onDelete: NoAction, onUpdate: NoAction)
+  marcaEquipo        MARCAEQUIPOS     @relation(fields: [equ_mrc_id], references: [mrc_id], onDelete: NoAction, onUpdate: NoAction)
+  proveedor          PROVEEDOREQUIPOS @relation(fields: [pvr_id], references: [pvr_id], onDelete: NoAction, onUpdate: NoAction)
+  estadoEquipo       ESTADOEQUIPOS    @relation(fields: [equ_est_id], references: [est_id], onDelete: NoAction, onUpdate: NoAction)
+  asignaciones       ASIGNACIONEQUIPOS[]
+  equipoLicencias    EQUIPOLICENCIAS[]
+}
+
+model ASIGNACIONEQUIPOS {
+  ase_id          Int        @id @default(autoincrement())
+  ase_equ_id      Int
+  ase_emp_id      Int
+  ase_fechaAsig   DateTime   @db.DateTime
+  ase_fechaDev    DateTime?  @db.DateTime
+  ase_numActEntr  String     @db.NVarChar(50)
+  equipo          EQUIPOS    @relation(fields: [ase_equ_id], references: [equ_id], onDelete: NoAction, onUpdate: NoAction)
+  empleado        EMPLEADOS  @relation(fields: [ase_emp_id], references: [emp_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model SUMINISTROS {
+  sum_id          Int        @id @default(autoincrement())
+  sum_nomb        String     @db.NVarChar(100)
+  sum_cant        Int
+  sum_fechaComp   DateTime   @db.DateTime
+  sum_pu          Decimal    @db.Decimal(10, 2)
+  sum_pvr_id      Int
+  sum_numFact     String     @db.NVarChar(50)
+  sum_numOC       String     @db.NVarChar(50)
+  proveedor       PROVEEDOREQUIPOS @relation(fields: [sum_pvr_id], references: [pvr_id], onDelete: NoAction, onUpdate: NoAction)
+  transacciones   TRANSACCIONSUMINISTROS[]
+}
+
+model TRANSACCIONSUMINISTROS {
+  trs_id            Int        @id @default(autoincrement())
+  sum_id            Int
+  trs_tipotransa    String     @db.NVarChar(20)
+  trs_cant          Int
+  trs_fecha         DateTime   @db.DateTime
+  trs_emp_id        Int
+  trs_nota          String     @db.NVarChar(250)
+  suministro        SUMINISTROS @relation(fields: [sum_id], references: [sum_id], onDelete: NoAction, onUpdate: NoAction)
+  empleado          EMPLEADOS   @relation(fields: [trs_emp_id], references: [emp_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model SOFTWARE {
+  sof_id          Int        @id @default(autoincrement())
+  sof_nomb        String     @db.NVarChar(100)
+  sof_editor      String     @db.NVarChar(100)
+  sof_fechainsta  DateTime   @db.DateTime
+  sof_version     String     @db.NVarChar(20)
+  sof_descrip     String     @db.NVarChar(250)
+  licencias       LICENCIAS[]
+}
+
+model LICENCIAS {
+  lcd_id          Int        @id @default(autoincrement())
+  lcd_sof_id      Int
+  lcd_tipLice     String     @db.NVarChar(50)
+  lcd_fechaComp   DateTime   @db.DateTime
+  lcd_fechaVenci  DateTime   @db.DateTime
+  lcd_clave       String     @db.NVarChar(150)
+  lcd_cantLice    Int
+  lcd_proveedor   String     @db.NVarChar(100)
+  lcd_costoUni    Decimal    @db.Decimal(10, 2)
+  lcd_suscripEst  String     @db.NVarChar(20)
+  software        SOFTWARE   @relation(fields: [lcd_sof_id], references: [sof_id], onDelete: NoAction, onUpdate: NoAction)
+  equipoLicencias EQUIPOLICENCIAS[]
+}
+
+model EQUIPOLICENCIAS {
+  elc_id           Int        @id @default(autoincrement())
+  elc_lcd_id       Int
+  elc_equ_id       Int
+  elc_fechainsta   DateTime   @db.DateTime
+  elc_usuarioInsta String     @db.NVarChar(100)
+  elc_observacion  String     @db.NVarChar(250)
+  elc_estado       String     @db.NVarChar(20)
+  licencia         LICENCIAS  @relation(fields: [elc_lcd_id], references: [lcd_id], onDelete: NoAction, onUpdate: NoAction)
+  equipo           EQUIPOS    @relation(fields: [elc_equ_id], references: [equ_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model USUARIOS {
+  usr_id          Int        @id @default(autoincrement())
+  usr_username    String     @unique @db.NVarChar(50)
+  usr_password    String     @db.NVarChar(255)
+  usr_role        String     @db.NVarChar(20)
+  emp_id          Int?
+  empleado        EMPLEADOS? @relation(fields: [emp_id], references: [emp_id], onDelete: SetNull, onUpdate: NoAction)
+}
